@@ -8,6 +8,11 @@ PROD2: Código del segundo producto más vendido de dicho rubro
 CLIENTE: Código del cliente que compro más productos del rubro en los últimos 30 días
 La consulta no puede mostrar NULL en ninguna de sus columnas y 
 debe estar ordenada por cantidad de productos diferentes vendidos del rubro. */
+
+
+
+
+---MI VERSION
 SELECT r.rubr_detalle AS DETALLE_RUBRO,
 SUM(i2.item_cantidad*i2.item_precio) as VENTAS,
 (SELECT TOP 1 p2.prod_codigo
@@ -37,7 +42,7 @@ ORDER BY COUNT(DISTINCT i2.item_producto) ASC
 
 
 
-
+----------------------------------------VERSION EL PROFE
 
 SELECT r.rubr_detalle, SUM(i.item_precio * i.item_cantidad) AS Ventas,
 
@@ -102,3 +107,30 @@ WHERE NOT EXISTS (SELECT 1 FROM producto p2 INNER JOIN rubro r2 ON p2.prod_rubro
                   INNER JOIN Item_Factura i2 ON i2.item_producto = p2.prod_codigo 
 
 				  WHERE r2.rubr_id = r.rubr_id )
+
+
+
+				  --------------------VERSION JOACO
+
+				  use GD2015C1select rubr_detalle 'Rubro',	sum(item_cantidad * item_precio) 'Suma de todas las ventas',	
+				  (select top 1 prod_codigo from producto	
+				  join item_factura on item_producto = prod_codigo	where prod_rubro = rubr_id	
+				  group by prod_codigo	order by sum(item_cantidad) desc) 'Producto más vendido',	
+				  (select top 1 prod_codigo 
+				  from producto	
+				  join item_factura on item_producto = prod_codigo	
+				  where prod_rubro = rubr_id and		prod_codigo !=
+				  (select top 1 prod_codigo from producto			j
+				  oin item_factura on item_producto = prod_codigo		
+				  where prod_rubro = rubr_id		
+				  group by prod_codigo	
+				  order by sum(item_cantidad) desc)	
+				  group by prod_codigo	order by sum(item_cantidad) desc) 'Segundo producto más vendido',
+				  (select top 1 fact_cliente from factura f1	
+				  join item_factura on item_sucursal+item_tipo+item_numero = fact_sucursal+fact_tipo+fact_numero	
+				  join producto on prod_codigo = item_producto	where prod_rubro = rubr_id and
+		       datediff(day, fact_fecha, ( -- Esto va si último año = último año en el que hizo una compra. Sino sería getdate().
+			    select top 1 fact_fecha from factura f2
+			   where f1.fact_cliente = f2.fact_cliente
+			  order by 1 desc
+		)) < 30) 'Cliente que más compró en los últimos 30 días'from rubro	left join producto on prod_rubro = rubr_id	left join item_factura on item_producto = prod_codigogroup by rubr_detalle, rubr_idorder by count(distinct item_producto)
